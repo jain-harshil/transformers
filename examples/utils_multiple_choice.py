@@ -275,6 +275,105 @@ class SwagProcessor(DataProcessor):
 
         return examples
 
+class COPAProcessor(DataProcessor):
+    """Processor for the COPA data set."""
+
+    def get_train_examples(self, data_dir):
+        """See base class."""
+        logger.info("LOOKING AT {} train".format(data_dir))
+        return self._create_examples(self._read_csv(os.path.join(data_dir, "train.csv")), "train")
+
+    def get_dev_examples(self, data_dir):
+        """See base class."""
+        logger.info("LOOKING AT {} dev".format(data_dir))
+        return self._create_examples(self._read_csv(os.path.join(data_dir, "val.csv")), "dev")
+
+    def get_test_examples(self, data_dir):
+        """See base class."""
+        logger.info("LOOKING AT {} dev".format(data_dir))
+        raise ValueError(
+            "For copa testing, the input file does not contain a label column. It can not be tested in current code"
+            "setting!"
+        )
+        return self._create_examples(self._read_csv(os.path.join(data_dir, "test.csv")), "test")
+
+    def get_labels(self):
+        """See base class."""
+        return ["0", "1"]
+
+    def _read_csv(self, input_file):
+        with open(input_file, "r", encoding="utf-8") as f:
+            return list(csv.reader(f))
+
+    def _create_examples(self, lines: List[List[str]], type: str):
+        """Creates examples for the training and dev sets."""
+        if type == "train" and lines[0][-1] != "label":
+            raise ValueError("For training, the input file must contain a label column.")
+
+        examples = [
+            InputExample(
+                example_id=line[4],
+                question="",  # in the swag dataset, the
+                # common beginning of each
+                # choice is stored in "sent2".
+                contexts=[line[0], line[0]],
+                endings=[line[1], line[2]],
+                label=line[5],
+            )
+            for line in lines[1:]  # we skip the line with the column names
+        ]
+
+        return examples
+
+class SIQAProcessor(DataProcessor):
+    """Processor for the COPA data set."""
+
+    def get_train_examples(self, data_dir):
+        """See base class."""
+        logger.info("LOOKING AT {} train".format(data_dir))
+        return self._create_examples(self._read_csv(os.path.join(data_dir, "train.csv")), "train")
+
+    def get_dev_examples(self, data_dir):
+        """See base class."""
+        logger.info("LOOKING AT {} dev".format(data_dir))
+        return self._create_examples(self._read_csv(os.path.join(data_dir, "val.csv")), "dev")
+
+    def get_test_examples(self, data_dir):
+        """See base class."""
+        logger.info("LOOKING AT {} dev".format(data_dir))
+        raise ValueError(
+            "For siqa testing, the input file does not contain a label column. It can not be tested in current code"
+            "setting!"
+        )
+        return self._create_examples(self._read_csv(os.path.join(data_dir, "test.csv")), "test")
+
+    def get_labels(self):
+        """See base class."""
+        return ["0", "1", "2"]
+
+    def _read_csv(self, input_file):
+        with open(input_file, "r", encoding="utf-8") as f:
+            return list(csv.reader(f))
+
+    def _create_examples(self, lines: List[List[str]], type: str):
+        """Creates examples for the training and dev sets."""
+        if type == "train" and lines[0][-2] != "label":
+            raise ValueError("For training, the input file must contain a label column.")
+
+        examples = [
+            InputExample(
+                example_id=line[6],
+                question=line[1],  # in the swag dataset, the
+                # common beginning of each
+                # choice is stored in "sent2".
+                contexts=[line[0], line[0], line[0]],
+                endings=[line[2], line[3], line[4]],
+                label=line[5],
+            )
+            for line in lines[1:]  # we skip the line with the column names
+        ]
+
+        return examples
 
 class ArcProcessor(DataProcessor):
     """Processor for the ARC data set (request from allennlp)."""
@@ -382,10 +481,11 @@ def convert_examples_to_features(
     """
 
     label_map = {label: i for i, label in enumerate(label_list)}
-
+    logger.info("Printing label map")
+    logger.info("Label map length: %d" % (len(label_map)))
     features = []
     for (ex_index, example) in tqdm.tqdm(enumerate(examples), desc="convert examples to features"):
-        if ex_index % 10000 == 0:
+        if ex_index % 1000 == 0:
             logger.info("Writing example %d of %d" % (ex_index, len(examples)))
         choices_inputs = []
         for ending_idx, (context, ending) in enumerate(zip(example.contexts, example.endings)):
@@ -435,7 +535,7 @@ def convert_examples_to_features(
     return features
 
 
-processors = {"race": RaceProcessor, "swag": SwagProcessor, "arc": ArcProcessor}
+processors = {"race": RaceProcessor, "swag": SwagProcessor, "copa": COPAProcessor,"siqa": SIQAProcessor,"arc": ArcProcessor}
 
 
-MULTIPLE_CHOICE_TASKS_NUM_LABELS = {"race", 4, "swag", 4, "arc", 4}
+MULTIPLE_CHOICE_TASKS_NUM_LABELS = {"race", 4, "swag", 4, "copa", 2, "siqa", 3, "arc", 4}
