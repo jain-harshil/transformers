@@ -313,9 +313,7 @@ class COPAProcessor(DataProcessor):
         examples = [
             InputExample(
                 example_id=line[4],
-                question="",  # in the swag dataset, the
-                # common beginning of each
-                # choice is stored in "sent2".
+                question="What is the"+line[3]+"for this?",
                 contexts=[line[0], line[0]],
                 endings=[line[1], line[2]],
                 label=line[5],
@@ -363,9 +361,7 @@ class SIQAProcessor(DataProcessor):
         examples = [
             InputExample(
                 example_id=line[6],
-                question=line[1],  # in the swag dataset, the
-                # common beginning of each
-                # choice is stored in "sent2".
+                question=line[1], 
                 contexts=[line[0], line[0], line[0]],
                 endings=[line[2], line[3], line[4]],
                 label=line[5],
